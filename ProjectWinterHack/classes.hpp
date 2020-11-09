@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "utils.hpp"
+#include "offsets.hpp"
 #include <map>
 
 enum class ePlayerClass : int
@@ -36,6 +37,7 @@ enum class ePlayerRole : int
     Lumberjack = 10,
     Scientist_S = 11,
     ClassicSurvivor = 12,
+    Detective = 13,
     ClassicTraitor = 1000,
     Saboteur = 1001,
     Peeker = 1002,
@@ -62,12 +64,12 @@ struct Il2CppString
 
     static Il2CppString* New(const char* str)
     {
-        return Utilities::FindFunction<il2cpp_string_new>(0x197200)(str);
+        return Utilities::FindFunction<il2cpp_string_new>(Offsets::Methods::String_New)(str);
     }
 
     static Il2CppString* Concat(Il2CppString* str0, Il2CppString* str1)
     {
-        return Utilities::FindFunction<Il2CppString__Concat>(0x2001930)(str0, str1);
+        return Utilities::FindFunction<Il2CppString__Concat>(Offsets::Methods::String_Concat)(str0, str1);
     }
 };
 
@@ -96,6 +98,14 @@ struct Il2CppList
     int length; // 0x18
 };
 
+template<class T>
+struct Il2CppStructList
+{
+    char pad_0[0x10];
+    Il2CppArray<T>* items; // 0x10
+    int length; // 0x18
+};
+
 struct UnityVector3
 {
     float x; // 0x0
@@ -109,6 +119,16 @@ struct Color32
     BYTE g; // 0x1
     BYTE b; // 0x2
     BYTE a; // 0x3
+};
+
+struct CamZoomFX
+{
+    typedef void __fastcall CamZoomFX__StartZooming(CamZoomFX* camZoomFX, float a, float b, bool flag);
+  
+    void StartZooming(float a, float b, bool flag = false)
+    {
+        Utilities::FindFunction<CamZoomFX__StartZooming>(Offsets::Methods::CamZoomFX_StartZooming)(this, a, b, flag);
+    }
 };
 
 struct UnlockProgressNodeInfo
@@ -166,23 +186,20 @@ struct TextMeshProUGUI
     char pad_0[0x17C];
     Color32 fontColor; // 0x17C
 
-    typedef void __fastcall TextMeshProUGUI__SetText(DWORD64* textMeshProUGUI, Il2CppString* text);
-    typedef void __fastcall TextMeshProUGUI__SetFaceColor(DWORD64* textMeshProUGUI, Color32 newColor);
-    typedef void __fastcall TextMeshProUGUI__SetAllDirty(DWORD64* textMeshProUGUI);
+    typedef void __fastcall TextMeshProUGUI__SetText(TextMeshProUGUI* textMeshProUGUI, Il2CppString* text);
+    typedef void __fastcall TextMeshProUGUI__SetFaceColor(TextMeshProUGUI* textMeshProUGUI, Color32 newColor);
+    typedef void __fastcall TextMeshProUGUI__SetAllDirty(TextMeshProUGUI* textMeshProUGUI);
     
     void SetText(Il2CppString* text)
     {		
-        Utilities::FindFunction<TextMeshProUGUI__SetText>(0x7AEBD0)((DWORD64*)&pad_0, text);
+        Utilities::FindFunction<TextMeshProUGUI__SetText>(Offsets::Methods::TextMeshProUGUI_SetText)(this, text);
+        Utilities::FindFunction<TextMeshProUGUI__SetAllDirty>(Offsets::Methods::TextMeshProUGUI_SetAllDirty)(this);
     }
 
     void SetFaceColor(Color32 newColor)
     {
-        Utilities::FindFunction<TextMeshProUGUI__SetFaceColor>(0x2C0C5B0)((DWORD64*)&pad_0, newColor);
-    }
-
-    void SetAllDirty()
-    {
-        Utilities::FindFunction<TextMeshProUGUI__SetAllDirty>(0x1578410)((DWORD64*)&pad_0);
+        Utilities::FindFunction<TextMeshProUGUI__SetFaceColor>(Offsets::Methods::TextMeshProUGUI_SetFaceColor)(this, newColor);
+        Utilities::FindFunction<TextMeshProUGUI__SetAllDirty>(Offsets::Methods::TextMeshProUGUI_SetAllDirty)(this);
     }
 };
 
@@ -194,15 +211,12 @@ struct PlayerHoverUIHandler
 
 struct TextChatBox
 {
-    char pad_0[0xE0];
-    Il2CppString* localPlayerName; // 0xE0
-
-    typedef void __fastcall TextChat__DisplayLocalMessage(DWORD64* textChat, Il2CppString* message);
+    typedef void __fastcall TextChat__DisplayLocalMessage(TextChatBox* textChat, Il2CppString* message);
 
     void DisplayLocalMessage(const char* message)
     {
         Il2CppString* messageString = Il2CppString::New(message);
-        Utilities::FindFunction<TextChat__DisplayLocalMessage>(0x8522A0)((DWORD64*)&pad_0, messageString);
+        Utilities::FindFunction<TextChat__DisplayLocalMessage>(Offsets::Methods::TextChat_DisplayLocalMessage)(this, messageString);
     }
 };
 
@@ -223,8 +237,8 @@ struct Recipe
 
 struct CraftingEntryUI
 {
-    char pad_0[0x88];
-    bool canCraft; // 0x88
+    char pad_0[0xA0];
+    bool canCraft; // 0xA0
 };
 
 struct CraftingUI
@@ -237,17 +251,20 @@ struct CraftingUI
 
 struct HudManager
 {
-    char pad_0[0x88];
-    TextChatBox* textChatBox; // 0x88;
+    char pad_0[0x98];
+    TextChatBox* textChatBox; // 0x98;
     char pad_1[0x10];
-    CraftingUI* craftingUI; // 0xA0
+    CraftingUI* craftingUI; // 0xB0
 };
 
 struct PlayerRoleData
 {
     char pad_0[0x18];
-    ePlayerRole playerRole; //0x18
-    bool isTraitorRole; //0x1C
+    ePlayerRole playerRole; // 0x18
+    char pad_1[0x14];
+    bool isTraitorRole; // 0x30
+    char pad_2[0x47];
+    float maxCharge; // 0x78
 
     Il2CppString* GetPlayerRoleString()
     {
@@ -256,6 +273,7 @@ struct PlayerRoleData
             { ePlayerRole::ClassicTraitor, Il2CppString::New(" [Traitor]") },
             { ePlayerRole::Defector, Il2CppString::New(" [Defector]") },
             { ePlayerRole::Demon, Il2CppString::New(" [Demon]") },
+            { ePlayerRole::Detective, Il2CppString::New(" [Detective]") },
             { ePlayerRole::Hacker_S, Il2CppString::New(" [Hacker]") },
             { ePlayerRole::Hacker_T, Il2CppString::New(" [Hacker]") },
             { ePlayerRole::Hunter, Il2CppString::New(" [Hunter]") },
@@ -288,6 +306,7 @@ struct PlayerRoleHandler
 {
     char pad_0[0x20];
     PlayerRoleData* playerRoleData; // 0x20
+    float abilityCharge; //0x28
 };
 
 struct PlayerHandler
@@ -300,89 +319,148 @@ struct PlayerHandler
     BaseStatScript* hungerScript; // 0xE8
     char pad_2[0x8];
     HudManager* hudManager; // 0xF8
-    char pad_3[0xB0];
-    PlayerRoleHandler* playerRoleHandler; // 0x1B0
-    char pad_4[0x171];
-    bool isConvertedTraitor; // 0x329
+    char pad_3[0xC0];
+    PlayerRoleHandler* playerRoleHandler; // 0x1C0
+    char pad_4[0x180];
+    bool isConvertedTraitor; // 0x348
 
     typedef void __fastcall PlayerHandler__SwapPlayerRole(PlayerHandler* playerHandler, ePlayerRole playerRole, bool arg2, int arg3);
 
     void SwapPlayerRole(ePlayerRole playerRole)
     {
-        Utilities::FindFunction<PlayerHandler__SwapPlayerRole>(0x3F8BD0)(this, playerRole, true, 9);
+        Utilities::FindFunction<PlayerHandler__SwapPlayerRole>(Offsets::Methods::PlayerHandler_SwapPlayerRole)(this, playerRole, false, 9);
     }
 };
 
 struct PhotonPlayer
 {
-    char pad_0[0x10];
-    int actorID; // 0x10
-    char pad_1[0x4];
-    Il2CppString* nameField; // 0x18
-    Il2CppString* userId; // 0x20
-    bool isLocal; // 0x28
-    bool isInactive; // 0x29
-};
-
-struct NetworkingPeer
-{
-    char pad_0[0x1C8];
-    Il2CppArray<PhotonPlayer*>* playerList; // 0x1C8
+    char pad_0[0x18];
+    int actorID; // 0x18
+    bool isLocal; // 0x1C
+    char pad_1[0x3];
+    Il2CppString* nameField; // 0x20
 };
 
 struct PhotonNetwork
 {
-    char pad_0[0x10];
-    NetworkingPeer* networkingPeer; // 0x10
+    typedef Il2CppArray<PhotonPlayer*>* __fastcall PhotonNetwork__GetPlayerList();
 
-    static PhotonNetwork* Instance()
+    static Il2CppArray<PhotonPlayer*>* GetPlayerList()
     {
-        static PhotonNetwork* ptr = nullptr;
-        if (!ptr) ptr = Utilities::FindClass<PhotonNetwork>(0x5487C70);
-        return ptr;
+        return Utilities::FindFunction<PhotonNetwork__GetPlayerList>(Offsets::Methods::PhotonNetwork_GetPlayerList)();
     }
 };
 
 struct LobbyHandler
 {
-    char pad_0[0x48];
-    eQuickMatchLobbyState lobbyState; // 0x48
+    char pad_0[0x40];
+    eQuickMatchLobbyState lobbyState; // 0x40
+};
+
+struct UnityText
+{
+    char pad_0[0xD0];
+    Il2CppString* text; // 0xD0
+
+    typedef void __fastcall UnityText__ChangeText(UnityText* unityText, Il2CppString* text);
+    typedef void __fastcall UnityText__SetAllDirty(UnityText* unityText);
+        
+    void ChangeText(const char* text)
+    {
+        Utilities::FindFunction<UnityText__ChangeText>(Offsets::Methods::UnityText_ChangeText)(this, Il2CppString::New(text));
+        Utilities::FindFunction<UnityText__SetAllDirty>(Offsets::Methods::UnityText_SetAllDirty)(this);
+    }
+};
+
+struct PlayMenuController
+{
+    char pad_0[0x118];
+    UnityText* versionText; // 0x118
+};
+
+struct UIManager
+{
+    char pad_0[0x28];
+    PlayMenuController* playMenuController; // 0x28
+};
+
+struct SocialRatingManager
+{
+    char pad_0[0x18];
+    bool enabledInGame; // 0x18
+    char pad_1[0x3];
+    ObscuredInt rateUpValue; // 0x1C
+    ObscuredInt rateDownValue; // 0x30
+    float degradationTime; // 0x44
+    int degradationValue; // 0x48
+    int numberOfVotes; // 0x4C
+
+    typedef void __fastcall SocialRatingManager__UpdateSocialRatingOnPlayFab(SocialRatingManager* socialRatingManager, ObscuredInt value, Il2CppString* playFabId);
+   
+    void UpdateSocialRatingOnPlayFab(int value, Il2CppString* playFabId) 
+    {
+        ObscuredInt* obsInt = new ObscuredInt();
+        obsInt->inited = true;
+        obsInt->currentCryptoKey = 0x0;
+        obsInt->hiddenValue = value;
+
+        Utilities::FindFunction<SocialRatingManager__UpdateSocialRatingOnPlayFab>(Offsets::Methods::SocialRatingManager_UpdateSocialRatingOnPlayFab)(this, *obsInt, playFabId);
+        delete obsInt;
+    }
 };
 
 struct LevelManager
 {
-    char pad_0[0x6A];
-    bool hasSessionStarted; // 0x6A
+    char pad_0[0x20];
+    CamZoomFX* mainCameraZoomFX; // 0x20
+    char pad_1[0x3A];
+    bool hasSessionStarted; // 0x62
+};
+
+struct DlcManager
+{
+    char pad_0[0x1C];
+    bool hasSupernaturalDlc; // 0x1C
 };
 
 struct GameManager
 {
     char pad_0[0x38];
     LobbyHandler* lobbyHandler; // 0x38
-    char pad_1[0x50];
+    char pad_1[0x10];
+    UIManager* uiManager; // 0x50
+    char pad_2[0x18];
+    SocialRatingManager* socialRatingManager; // 0x70
+    char pad_3[0x18];
     LevelManager* levelManager; // 0x90
+    char pad_4[0xC0];
+    DlcManager* dlcManager; // 0x158
+    char pad_5[0x8];
+    Il2CppString* playFabId; // 0x168
 
-    typedef PlayerHandler* __fastcall GameManager__GetPlayerHandler(DWORD64* gameManager, int playerId, bool includeGhost);
-    typedef void __fastcall GameManager__SetAwardedPoints(DWORD64* gameManager, int points, bool awardImmediate, bool localOnly);
-    typedef void (__fastcall* GameManager_Update)(GameManager* instance);
+    typedef PlayerHandler* __fastcall GameManager__GetPlayerHandler(GameManager* gameManager, int playerId, bool includeGhost);
+    typedef void __fastcall GameManager__SetAwardedPoints(GameManager* gameManager, int points, bool awardImmediate, bool localOnly);
+    typedef void (__fastcall* GameManager__Update)(GameManager* instance);
 
     PlayerHandler* GetPlayerHandler(int playerId, bool includeGhost)
     {
-        return Utilities::FindFunction<GameManager__GetPlayerHandler>(0x3C91060)((DWORD64*)&pad_0, playerId, includeGhost);
+        return Utilities::FindFunction<GameManager__GetPlayerHandler>(Offsets::Methods::GameManager_GetPlayerHandler)(this, playerId, includeGhost);
     }
 
     void SetAwardedPoints(int points, bool awardImmediate, bool localOnly)
     {
-        Utilities::FindFunction<GameManager__SetAwardedPoints>(0x3C91F20)((DWORD64*)&pad_0, points, awardImmediate, localOnly);
+        Utilities::FindFunction<GameManager__SetAwardedPoints>(Offsets::Methods::GameManager_SetAwardedPoints)(this, points, awardImmediate, localOnly);
     }
 
     static GameManager* Instance()
     {
         static GameManager* ptr = nullptr;
-        if (!ptr) ptr = *(GameManager**)Utilities::FindClass<GameManager>(0x5488188);
+        if (!ptr) ptr = *(GameManager**)Utilities::FindClass<GameManager>(Offsets::Classes::GameManager);
         return ptr;
     }
 };
 
 typedef void(__fastcall* UnlocksEntryUI__Init)(__int64 a1, __int64 a2, int a3, unsigned int a4, __int64 a5, __int64 a6, UnlockProgress* unlockProgress, __int64 a8);
+typedef void(__fastcall* VFXManager__DoCameraZoom)(float a1, float a2, bool a3);
+typedef void(__fastcall* VFXManager__ResetCameraZoom)(float a1, bool a2, bool a3);
 typedef void ObscuredCheatingDetector__Dispose();
